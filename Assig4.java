@@ -13,11 +13,21 @@ import java.util.*;
 public class Assig4{
 	
 	public int counter = 0;
+	public int globalCount = 1;
 	public int rows;
 	public int cols;
 	public int currSolCount = 0;
-	public int [] pathRows;
-	public int [] pathCols;
+	public int solCount = 0;
+	public ArrayList<Integer> pathRows = new ArrayList<Integer>();
+	public ArrayList<Integer> pathCols = new ArrayList<Integer>();
+	public int x,y;
+	boolean globalTrue = false;
+	
+	//Group of shortest parts
+	public int shortestPath;
+	public ArrayList<Integer> shortRows = new ArrayList<Integer>();
+	public ArrayList<Integer> shortCols = new ArrayList<Integer>();
+	public int [][] theShortest;
 
 	public static void main(String [] args){
 		new Assig4(args[0]);
@@ -39,14 +49,14 @@ public class Assig4{
 		String [] dims = (fReader.nextLine()).split(" ");
 		rows = Integer.parseInt(dims[0]);
 		cols = Integer.parseInt(dims[1]);
-		pathRows = new int[rows*cols];
-		pathCols = new int[rows*cols];
+		shortestPath = rows*cols;
 		
 		String [] startPoints = (fReader.nextLine()).split(" ");
 		int rowStart = Integer.parseInt(startPoints[0]);
 		int colStart = Integer.parseInt(startPoints[1]);
 		
 		int [][] theMaze = new int[rows][cols];
+		theShortest = new int[rows][cols];
 
 		for (int i = 0; i < rows; i++)
 		{
@@ -74,62 +84,38 @@ public class Assig4{
 		
 		//This ends the initial set up of the maze and display
 		
-		
-		
-		//while (!(word.equals(""))) This while loop WILL be used to find every solution?
-		//{
-			int x = rowStart, y = colStart;
-		
-			boolean found = false;
-			for (int r = 0; (r < rows && !found); r++)
-			{
-				for (int c = 0; (c < cols && !found); c++)
-				{
-				// Start search for each position at index 0 of the word
-					found = find2(r, c, 0, theMaze);
-					if (found)
-					{
-						x = r;  // store starting indices of solution
-						y = c;
-					}
-				}
-			}
 
-			if (found)
+		boolean found = find2(rowStart, colStart, 0, theMaze);
+
+		if(!globalTrue)
+		{
+			System.out.println("No path from this point leads to the number 2");
+			System.out.println("A total of " + globalCount + " recursive calls were made");
+		}
+		else{
+			System.out.println("\n\nThere were a total of " + solCount + " solutions found");
+			System.out.println("A total of " + globalCount + " recursive calls were made");
+			System.out.println("The shortest solution had " + shortestPath + " segments");
+			
+			for (int i = 0; i < rows; i++)
 			{
-				System.out.println("Solution Found with " + currSolCount + " segments");
-				System.out.print("Path:");
-				for(int i = 0; i < currSolCount; i++){
-					System.out.print(" (" + pathRows[i] + "," + pathCols[i] + ")");
-				}
-				System.out.println();
-				System.out.println();
-				
-				
-				for (int i = 0; i < rows; i++)
+				for (int j = 0; j < cols; j++)
 				{
-					for (int j = 0; j < cols; j++)
-					{
-						System.out.print(theMaze[i][j] + " ");
-						//theMaze[i][j] = Character.toLowerCase(theMaze[i][j]); //Reset maze
-					}
-					System.out.println();
+					System.out.print(theShortest[i][j] + " ");
 				}
-			}
-			else
-			{
-				System.out.println("No path from this point leads to the number 2");
+				System.out.println();
 			}
 			
-		//}
-		
-		
+			System.out.print("Path:");
+			for(int i = 0; i < shortestPath; i++){
+				System.out.print(" (" + shortRows.get(i) + "," + shortCols.get(i) + ")");
+			}
+		}
 	}
 	
 	public boolean find2(int r, int c, int loc, int [][] bo)
 	{
-		//System.out.println("findWord: " + r + ":" + c + " " + word + ": " + loc); // trace code
-		
+		//globalCount++;
 		// Check boundary conditions
 		if (r >= bo.length || r < 0 || c >= bo[0].length || c < 0)
 			return false;
@@ -140,31 +126,74 @@ public class Assig4{
 			int holder = bo[r][c];
 			bo[r][c] = 8;  // Change to -1 so it leaves a path
 			counter++;
-			pathRows[loc] = r;
-			pathCols[loc] = c;
+			pathRows.add(loc, new Integer(r));
+			pathCols.add(loc, new Integer(c));
 				
 			boolean answer;
 			if (holder == 2){		//Looks like we found ol' #2
-				answer = true;		
 				currSolCount = loc + 1;
-				bo[r][c] = holder;
+				solCount++;
+				bo[r][c] = 2;
+				printSol(bo);
+				
+				if(shortestPath>loc){
+					shortestPath = loc + 1;
+					shortCols.clear();
+					shortRows.clear();
+					for(int i = 0; i<pathCols.size();i++){
+						shortCols.add(i, new Integer(pathCols.get(i)));
+						shortRows.add(i, new Integer(pathRows.get(i)));
+					}
+					
+					for (int i = 0; i < rows; i++)
+					{
+						for (int j = 0; j < cols; j++)
+						{
+							theShortest[i][j] = bo[i][j];
+						}
+					}
+				}
+				
+				return false;			//Need to not return false, must backtrack properly
 			}				
 				
 			else	// Still have more letters to match, so recurse.
 			{		// Try all four directions if necessary.
+				
 				answer = find2(r, c+1, loc+1, bo);  // Right
 				if (!answer)
+					globalCount++;
 					answer = find2(r+1, c, loc+1, bo);  // Down
 				if (!answer)
+					globalCount++;
 					answer = find2(r, c-1, loc+1, bo);  // Left
 				if (!answer)
+					globalCount++;
 					answer = find2(r-1, c, loc+1, bo);  // Up
-
 				if (!answer)
 					bo[r][c] = 0; //Backtrack
 			}
+			
 			return answer;
 		}
+	}
+	
+	public void printSol(int [][] theMaze){
+		System.out.println("\nSolution Found with " + currSolCount + " segments");
+		for (int i = 0; i < rows; i++)
+		{
+			for (int j = 0; j < cols; j++)
+			{
+				System.out.print(theMaze[i][j] + " ");
+				//theMaze[i][j] = Character.toLowerCase(theMaze[i][j]); //Reset maze
+			}
+			System.out.println();
+		}
+		System.out.print("Path:");
+		for(int i = 0; i < currSolCount; i++){
+			System.out.print(" (" + pathRows.get(i) + "," + pathCols.get(i) + ")");
+		}
+		globalTrue = true;
 	}
 	
 	
