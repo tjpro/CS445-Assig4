@@ -13,7 +13,7 @@ import java.util.*;
 public class Assig4{
 	
 	public int counter = 0;
-	public int globalCount = 0;
+	public long globalCount = 0;
 	public int rows;
 	public int cols;
 	public int currSolCount = 0;
@@ -22,7 +22,7 @@ public class Assig4{
 	public ArrayList<Integer> pathCols = new ArrayList<Integer>();
 	public int x,y;
 	public boolean globalTrue = false;
-	public int [][] theMaze;
+	public char [][] theMaze;
 	public int rowStart;
 	public int colStart;
 	
@@ -30,7 +30,7 @@ public class Assig4{
 	public int shortestPath;
 	public ArrayList<Integer> shortRows = new ArrayList<Integer>();
 	public ArrayList<Integer> shortCols = new ArrayList<Integer>();
-	public int [][] theShortest;
+	public char [][] theShortest;
 
 	public static void main(String [] args){
 		String fileName = args[0];
@@ -55,7 +55,7 @@ public class Assig4{
 				int rStart = Integer.parseInt(startPoints[0]);
 				int cStart = Integer.parseInt(startPoints[1]);
 				
-				int [][] tMaze = new int[rs][cs];
+				char [][] tMaze = new char[rs][cs];
 				
 				for (int i = 0; i < rs; i++)
 				{
@@ -63,11 +63,13 @@ public class Assig4{
 					String [] rowString = (fReader.nextLine()).split(" ");
 					for (int j = 0; j < rowString.length; j++)
 					{
-						tMaze[i][j] = Integer.parseInt(rowString[j]);
+						tMaze[i][j] = rowString[j].charAt(0);
 					}
 				}
+				System.out.println("\n\n");
 				
 				new Assig4(rs, cs, sPath, rStart, cStart, tMaze);
+				
 			}
 			catch(Exception e){
 				break;
@@ -76,7 +78,7 @@ public class Assig4{
 		
 	}
 	
-	public Assig4(int rs, int cs, int sPath, int rStart, int cStart, int [][] tMaze){
+	public Assig4(int rs, int cs, int sPath, int rStart, int cStart, char [][] tMaze){
 		rows = rs;
 		cols = cs;
 		rowStart = rStart;
@@ -84,7 +86,7 @@ public class Assig4{
 		shortestPath = sPath;
 		theMaze = tMaze;
 		
-		theShortest = new int[rows][cols];
+		theShortest = new char[rows][cols];
 
 		
 
@@ -105,7 +107,7 @@ public class Assig4{
 		//This ends the initial set up of the maze and display
 		
 
-		boolean found = find2(rowStart, colStart, 0, theMaze);
+		find2(rowStart, colStart, 0, theMaze);
 
 		if(!globalTrue)
 		{
@@ -116,6 +118,19 @@ public class Assig4{
 			System.out.println("\n\nThere were a total of " + solCount + " solutions found");
 			System.out.println("A total of " + globalCount + " recursive calls were made");
 			System.out.println("The shortest solution had " + shortestPath + " segments");
+			
+			for (int i = 0; i < rows; i++)
+			{
+				for (int j = 0; j < cols; j++)
+				{
+					theShortest[i][j] = theMaze[i][j];
+				}
+			}
+			
+			for (int i = 0; i < shortestPath-1; i++)
+			{
+				theShortest[shortRows.get(i)][shortCols.get(i)] = 'x';
+			}
 			
 			for (int i = 0; i < rows; i++)
 			{
@@ -138,81 +153,55 @@ public class Assig4{
 		}
 	}
 	
-	public boolean find2(int r, int c, int loc, int [][] bo)
+	public void find2(int r, int c, int loc, char [][] bo)
 	{
 		globalCount++;
-		// Check boundary conditions
-		if (r >= bo.length || r < 0 || c >= bo[0].length || c < 0)
-			return false;
-		if (bo[r][c] != 0 && bo[r][c] != 2)  // char does not match
-			return false;
-		else  	// current character matches
-		{
-			int holder = bo[r][c];
-			bo[r][c] = 8;  // Change to -1 so it leaves a path
-			counter++;
-			pathRows.add(loc, new Integer(r));
-			pathCols.add(loc, new Integer(c));
-				
-			boolean answer;
-			if (holder == 2){		//Looks like we found ol' #2
-				currSolCount = loc + 1;
-				solCount++;
-				bo[r][c] = 2;
-				printSol(bo);
-				
-				if(shortestPath>loc){
-					shortestPath = loc + 1;
-					shortCols.clear();
-					shortRows.clear();
-					for(int i = 0; i<pathCols.size();i++){
-						shortCols.add(i, new Integer(pathCols.get(i)));
-						shortRows.add(i, new Integer(pathRows.get(i)));
-					}
-					
-					for (int i = 0; i < rows; i++)
-					{
-						for (int j = 0; j < cols; j++)
-						{
-							theShortest[i][j] = bo[i][j];
-						}
-					}
-				}
-				
-				return false;			//Need to not return false, must backtrack properly
-			}				
-				
-			else	// Still have more letters to match, so recurse.
-			{		// Try all four directions if necessary.
-				answer = false;
-				if (!answer && !(r >= bo.length || r < 0 || c+1 >= bo[0].length || c+1 < 0))
-					answer = find2(r, c+1, loc+1, bo);  // Right
-				if (!answer && !(r+1 >= bo.length || r+1 < 0 || c >= bo[0].length || c < 0))
-					answer = find2(r+1, c, loc+1, bo);  // Down
-				if (!answer && !(r >= bo.length || r < 0 || c-1 >= bo[0].length || c-1 < 0))
-					answer = find2(r, c-1, loc+1, bo);  // Left
-				if (!answer && !(r-1 >= bo.length || r-1 < 0 || c >= bo[0].length || c < 0))
-					answer = find2(r-1, c, loc+1, bo);  // Up
-				if (!answer)
-					bo[r][c] = 0; //Backtrack
-			}
+		
+		char holder = bo[r][c];
+		bo[r][c] = 'x';  // Change to x so it leaves a path
+		counter++;
+		pathRows.add(new Integer(r));
+		pathCols.add(new Integer(c));
 			
-			return answer;
+		boolean answer;
+		if (holder == '2'){		//Looks like we found ye ol' #2
+			currSolCount = loc + 1;
+			solCount++;
+			bo[r][c] = '2';
+			printSol(bo);
+			
+			if(shortestPath>loc){
+				shortestPath = loc + 1;
+				for(int i = 0; i<pathCols.size();i++){
+					shortCols.add(i, new Integer(pathCols.get(i)));
+					shortRows.add(i, new Integer(pathRows.get(i)));
+				}
+			}
+		}				
+			
+		else	
+		{		// Try all four directions if necessary.
+			if (!(c+1 >= bo[0].length) && !(bo[r][c+1] == '1') && !(bo[r][c+1] == 'x'))
+				find2(r, c+1, loc+1, bo);  // Right
+			if (!(r+1 >= bo.length) && !(bo[r+1][c] == '1') && !(bo[r+1][c] == 'x'))
+				find2(r+1, c, loc+1, bo);  // Down
+			if (!(c-1 < 0) && !(bo[r][c-1] == '1')  && !(bo[r][c-1] == 'x'))
+				find2(r, c-1, loc+1, bo);  // Left
+			if (!(r-1 < 0) && !(bo[r-1][c] == '1') && !(bo[r-1][c] == 'x'))
+				find2(r-1, c, loc+1, bo);  // Up
+			bo[r][c] = '0'; //Backtrack
+			pathRows.remove(pathRows.size()-1);
+			pathCols.remove(pathCols.size()-1);
 		}
 	}
 	
-	public void printSol(int [][] theMaze){
+	public void printSol(char [][] theMaze){
 		System.out.println("\nSolution Found with " + currSolCount + " segments");
 		for (int i = 0; i < rows; i++)
 		{
 			for (int j = 0; j < cols; j++)
 			{
-				if(theMaze[i][j] == 8){
-						System.out.print("x" + " ");
-					}
-				else{
-					System.out.print(theMaze[i][j] + " ");
-				}
+				System.out.print(theMaze[i][j] + " ");
 			}
 			System.out.println();
 		}
@@ -220,9 +209,7 @@ public class Assig4{
 		for(int i = 0; i < currSolCount; i++){
 			System.out.print(" (" + pathRows.get(i) + "," + pathCols.get(i) + ")");
 		}
+		System.out.println();
 		globalTrue = true;
 	}
-	
-	
-	
 }
